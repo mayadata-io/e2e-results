@@ -13,10 +13,6 @@ def get_comment(fileName):
     file.close()
     return comment.strip()
 
-def post_comment(repoName,issueNumber,username,password,comment):
-    g=github.Github(username,password)
-    print(g.get_user().get_repo(repoName).get_issue(issueNumber).create_comment(comment))
-
 def main():
     parser = argparse.ArgumentParser(description='Issuer cli used to comment on github issues')
     parser.add_argument('-crf', '--credential', help='Credential file contains authentication information for github api', required=True)
@@ -28,8 +24,8 @@ def main():
     comment=get_comment(fileName=args['comment'])
     reponame=args['reponame']
     issuenumber=args['issuenumber']
-    post_comment(reponame,issuenumber,username,password,comment)
-
+    g=github.Github(username,password)
+    print(g.get_user().get_repo(reponame).get_issue(issuenumber).create_comment(comment))
 
 
 if __name__=="__main__":
