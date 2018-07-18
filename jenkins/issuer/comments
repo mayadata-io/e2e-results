@@ -1,0 +1,8 @@
+A python program reads the status of the playbook execution in /tmp/<YYYY-MM-DD-unique-run-id>/status file and creates a new comment at the issue github.com/openebs/e2e-results/issues/<unique-test-case-id>. The update structure would be something like:
+
+Test run update from test.openebs.io
+Test Plan id : YYYY-MM-DD-unique-run-id-AWS
+Test case id : 1234
+Ran for : 2 minutes
+Status : Success
+Logs : logs-e2e.openebs.io/<elastic link > 
