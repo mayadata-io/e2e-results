@@ -1,0 +1,17 @@
+# Description:  Deletes the Cluster and the Bucket associated the NAME passed as the extra-var
+# in playbook, e.g. --extra-vars="NAME=<cluster-name>" 
+# Author: Harshvardhan Karn
+###############################################################################################
+# Steps:
+# 1. Delete the Cluster
+# 2. Delete the Bucket
+###############################################################################################
+
+---
+- hosts: localhost
+  tasks:
+       - name: Deleting Cluster
+         shell: kops delete cluster --yes --name {{NAME}}.k8s.local --state gs://{{NAME}}/
+       
+       - name: Deleting Bucket
+         shell: gsutil rm -r gs://{{NAME}}/ 
