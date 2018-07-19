@@ -1,0 +1,30 @@
+# Description:  Generates a random name, & creates a bucket, InstanceGroup object and Initializes 
+# VMs running Kubernetes, in accordance to the node_count specified using kops in Google Cloud 
+# Author: Harshvardhan Karn
+###############################################################################################
+#Steps:
+#1. Generate a random 6 digit string using Python script
+#2. Create a bucket with the generated random Name
+#3. Create the Clusters, InstanceGroup objects and state store in bucket
+#4. Create the k8s Cluster, using VM instances.
+#5. Log a file with the name of Cluster inside /temp/run_id/gcp_cluster
+###############################################################################################
+
+---
+- hosts: localhost
+  tasks:
+       - name: Generating Random Cluster Name
+         shell: python3 random_name.py
+         register: cluster_name
+
+       - name: Creating Bucket
+         shell: gsutil mb gs://{{cluster_name.stdout}}/
+
+       - name: Creating the Cluster & InstanceGroup objects in our state store
+         shell: export KOPS_FEATURE_FLAGS=AlphaAllowGCE && kops create cluster {{cluster_name.stdout}}.k8s.local --zones us-central1-a --state gs://{{cluster_name.stdout}}/ --project={{PROJECT}} --node-count {{NODES}} --vpc=openebs-e2e
+
+       - name: Creating K8s Cluster
+         shell: export KOPS_FEATURE_FLAGS=AlphaAllowGCE && kops update cluster {{cluster_name.stdout}}.k8s.local --state gs://{{cluster_name.stdout}}/ --yes
+
+       - name: Logging Cluster Name inside /temp/run_id/gcp_cluster/
+         shell: mkdir -p ~/temp/123/gcp_cluster && touch ~/temp/123/gcp_cluster/{{cluster_name.stdout}}

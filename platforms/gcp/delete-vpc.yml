@@ -1,0 +1,13 @@
+# Description:  Deletes the Virtual Private Cloud with the name openebs-e2e, runs when all e2e test
+# are finished running 
+# Author: Harshvardhan Karn
+###############################################################################################
+#Steps:
+#1. Delete the VPC, openebs-e2e in Google Cloud
+###############################################################################################
+
+---
+- hosts: localhost
+  tasks:
+       - name: Deleting VPC `openebs-e2e`
+         shell: gcloud compute --project=openebs-ci networks delete openebs-e2e -q
