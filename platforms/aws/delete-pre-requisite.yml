@@ -1,0 +1,61 @@
+# delete-pre-requisite.yml
+# Description:  Deleting pre requisite will delete VPC, Subnet and Internet Gateway
+
+###############################################################################################
+#Test Steps:
+
+#1. Describe internet gateway will fetch the Internet-gateway-ID.
+#2. Detaching Internet gateway with the VPC Network.
+#3. Deleting internet gateway from aws.
+#4. Deleting the subnet from aws.
+#5. Deleting the VPC Network form aws.
+#6. Deleting temporary file which store the VpcId and SubnetId
+
+###############################################################################################
+
+---
+
+- hosts: localhost
+
+  vars:
+    vpc_id: "{{ lookup('lines', 'grep vpc /tmp/aws_cluster/tmp.csv | cut -d, -f1 | cut -d: -f2') }}"
+    subnet_id: "{{ lookup('lines', 'grep subnet /tmp/aws_cluster/tmp.csv | cut -d, -f2 | cut -d: -f2') }}"
+    gateway_id: "{{ lookup('lines', 'grep gateway_id /tmp/aws_cluster/tmp.csv | cut -d, -f3 | cut -d: -f2') }}"
+    case_id: 14
+    suite_id: 21
+    build_number: "{{ build_number }}"
+
+  tasks:
+  - name: Detaching internet gateway
+    shell: aws ec2 detach-internet-gateway --internet-gateway-id {{ gateway_id }} --vpc-id {{ vpc_id }}
+
+  - name: Deleting Internet gateway
+    shell: aws ec2 delete-internet-gateway --internet-gateway-id {{ gateway_id }}
+
+  - name: Deleting subnet
+    shell: aws ec2 delete-subnet --subnet-id {{ subnet_id }}
+
+  - name: Deleting VPC
+    shell: aws ec2 delete-vpc --vpc-id {{ vpc_id }}
+
+  - name: Deleting tmporary file
+    shell: rm /tmp/aws_cluster/tmp.csv
+
+  - block:
+      - name: Test Passed
+        set_fact:
+          status: "Test Passed"
+          flag: 1
+
+    rescue:
+      - name: Test Failed
+        set_fact:
+          status: "Test Failed"
+          flag: 5
+
+  - name: Create a json file for store case status
+    lineinfile:
+      create: yes
+      state: present
+      path: "/tmp/{{ ansible_date_time.date }}/{{ build_number }}/testrail/cases/{{ case_id }}/result.json"
+      line: '{ "case_id" : {{ case_id | to_json }}, "suite_id" : {{ suite_id | to_json }}, "result" : {{ status | to_json }}, "status_id" : {{ flag | to_json }} }'

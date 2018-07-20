@@ -1,0 +1,57 @@
+#Delete-aws-cluster.yml
+#Description: This will delete aws cluster, bucket, tags from subnets and cluster name file
+
+########################################################################################################################################################################
+
+#Steps:
+#1. Deleting the aws cluster
+#2. Deleting aws bucket contents means deleting cluster information from bucket
+#3. Deleting aws bucket
+#4. Deleting cluster tag from subnet
+#5. Deleting cluster name file
+########################################################################################################################################################################
+
+---
+
+- hosts: localhost
+  
+  vars:
+    build_number: "{{ build_number }}"
+    subnet_id: "{{ lookup('lines', 'grep subnet /tmp/aws_cluster/tmp.csv | cut -d, -f2 | cut -d: -f2') }}"
+    case_id: 12
+    suite_id: 21
+
+  tasks:
+    - name: Deleting aws cluster
+      shell: kops delete cluster --name {{ build_number }}-openebs-e2e.k8s.local --state=s3://{{ build_number }}-openebs-e2e --yes
+
+    - name: Deleting bucket contents
+      shell: aws s3 rm s3://{{ build_number }}-openebs-e2e --recursive
+          
+    - name: Deleting bucket
+      shell: aws s3api delete-bucket --bucket {{ build_number }}-openebs-e2e
+
+    - name: Deleting tags from subnets
+      shell: aws ec2 delete-tags --resources {{ subnet_id }} --tags Key=kubernetes.io/cluster/{{ build_number }}-openebs-e2e.k8s.local
+
+    - name: Deleting cluster name file
+      shell: rm /tmp/aws_cluster/{{ build_number }}-openebs-e2e.k8s.local
+
+    - block:
+        - name: Test Passed
+          set_fact:
+            status: "Test Passed"
+            flag: 1
+
+      rescue:
+        - name: Test Failed
+          set_fact:
+            status: "Test Failed"
+            flag: 5
+
+    - name: Create a json file for store case status
+      lineinfile:
+        create: yes
+        state: present
+        path: "/tmp/{{ ansible_date_time.date }}/{{ build_number }}/testrail/cases/{{ case_id }}/result.json"
+        line: '{ "case_id" : {{ case_id | to_json }}, "suite_id" : {{ suite_id | to_json }}, "result" : {{ status | to_json }}, "status_id" : {{ flag | to_json }} }'
