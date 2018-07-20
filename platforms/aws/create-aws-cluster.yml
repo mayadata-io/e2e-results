@@ -1,0 +1,48 @@
+# Creating-aws-cluster.yml
+########################################################################################################################################################################
+#Steps:
+
+#1.Creating aws bucket for store cluster information
+#2.Creating cluster in aws using the exixting VPC and subnet
+#3.Creating a file which store the cluster information
+########################################################################################################################################################################
+
+---
+- hosts: localhost
+
+  vars:
+    build_number: "{{ build_number }}"
+    region: eu-west-2
+    subnet_id: "{{ lookup('lines', 'grep subnet_id /tmp/aws_cluster/tmp.csv | cut -d, -f2 | cut -d: -f2') }}"
+    vpc_id: "{{ lookup('lines', 'grep vpc_id /tmp/aws_cluster/tmp.csv | cut -d, -f1 | cut -d: -f2') }}"
+    case_id: 11
+    suite_id: 21
+
+  tasks:
+    - name: Creting aws bucket
+      shell: aws s3api create-bucket --bucket {{ build_number }}-openebs-e2e --region {{ region }} --create-bucket-configuration LocationConstraint={{ region }}
+       
+    - name: Cluster creating started
+      shell: kops create cluster --name {{ build_number }}-openebs-e2e.k8s.local --zones {{ region }}a --node-count 3 --state s3://{{ build_number }}-openebs-e2e --vpc {{ vpc_id }} --subnets {{ subnet_id }}  --yes
+
+    - name: Store cluster name in a file
+      shell: mkdir -p /tmp/aws_cluster && touch /tmp/aws_cluster/{{ build_number }}-openebs-e2e.k8s.local
+
+    - block:
+        - name: Test Passed
+          set_fact:
+            status: "Test Passed"
+            flag: 1
+
+      rescue:
+        - name: Test Failed
+          set_fact:
+            status: "Test Failed"
+            flag: 5
+
+    - name: Create a json file for store case status
+      lineinfile:
+        create: yes
+        state: present
+        path: "/tmp/{{ ansible_date_time.date }}/{{ build_number }}/testrail/cases/{{ case_id }}/result.json"
+        line: '{ "case_id" : {{ case_id | to_json }}, "suite_id" : {{ suite_id | to_json }}, "result" : {{ status | to_json }}, "status_id" : {{ flag | to_json }} }'

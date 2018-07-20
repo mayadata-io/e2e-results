@@ -1,0 +1,66 @@
+# create-aws-cluster.yml
+# Description:  This will create VPC, Subnet and Internet gateway which is used in creating cluster
+
+###############################################################################################
+#Test Steps:
+
+#1. Create VPC means it create a VPC network in aws
+#2. Create subnet inside the VPC Network
+#3. Creating internet gateway for accessing VPC public
+#4. Attaching internet gateway with VPC Network
+#5. Create a csv file which store the VpcId and SubnetId
+#6. Create storage class and a volume.
+###############################################################################################
+
+
+---
+- hosts: localhost
+
+  vars:
+    zone: eu-west-2
+    case_id : 13
+    suite_id : 21
+    build_number: "{{ build_number }}"
+
+  tasks:
+  - name: create vpc in aws
+    shell: aws ec2 create-vpc --cidr-block 10.0.0.0/16 | grep VpcId | cut -d ":" -f2 | cut -d '"' -f2
+    register: vpc_id
+
+  - name: Creating subnet in aws
+    shell: aws ec2 create-subnet --vpc-id {{ vpc_id.stdout }} --availability-zone {{ zone }}a --cidr-block 10.0.1.0/24 | grep SubnetId |  cut -d ":" -f2 | cut -d '"' -f2
+    register: subnet_id
+
+  - name: creating internet gateway
+    shell: aws ec2 create-internet-gateway | grep InternetGatewayId | cut -d ":" -f2 | cut -d '"' -f2
+    register: gateway_id
+
+  - name: Attaching internet gateway to VPC
+    shell: aws ec2 attach-internet-gateway --vpc-id {{ vpc_id.stdout }} --internet-gateway-id {{ gateway_id.stdout }}
+   
+  - name: Create a csv file for store result
+    lineinfile:
+      create: yes
+      state: present
+      path: "/tmp/aws_cluster/tmp.csv"
+      line: 'vpc_id:{{ vpc_id.stdout}},subnet_id:{{ subnet_id.stdout }},gateway_id:{{ gateway_id.stdout }}'
+      mode: 0755
+
+  - block:
+      - name: Test Passed
+        set_fact:
+          status: "Test Passed"
+          flag: 1
+
+    rescue:
+      - name: Test Failed
+        set_fact:
+          status: "Test Failed"
+          flag: 5
+
+  - name: Create a json file for store case status
+    lineinfile:
+      create: yes
+      state: present
+      path: "/tmp/{{ ansible_date_time.date }}/{{ build_number }}/testrail/cases/{{ case_id }}/result.json"
+      line: '{ "case_id" : {{ case_id | to_json }}, "suite_id" : {{ suite_id | to_json }}, "result" : {{ status | to_json }}, "status_id" : {{ flag | to_json }} }'
