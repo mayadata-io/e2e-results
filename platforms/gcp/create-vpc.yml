@@ -1,6 +1,6 @@
 # Description:  Creates a Virtual Private Cloud with the name openebs-e2e, that will be specified
 # with all other clusters. Using --subnet-mode=auto will create a subnet for every zone. This file
-# is ran at the begining of e2e tests
+# is ran at the beginning of e2e tests
 # Author: Harshvardhan Karn
 ###############################################################################################
 #Steps:

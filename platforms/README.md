@@ -1,1 +1,1 @@
-Platform specific code and scripts
+Platform-specific code and scripts

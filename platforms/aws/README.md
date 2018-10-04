@@ -1,6 +1,6 @@
-# AWS platform specific code and scripts
+# AWS platform-specific code and scripts
 ## Amazon web service and setting up Kubernetes cluster using KOPS
-These playbook act as a wrapper class for all the `kops`, `aws`  command. 
+This playbook acts as a wrapper class for all the `kops`, `aws`  command. 
 
 ### Prerequisites
 - kubectl
