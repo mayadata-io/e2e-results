@@ -102,11 +102,13 @@ def create_case_resources(cases, path):
 
         # Creating directory for test
         tmp_path, err = create_directory(path + "/" + str(case['id']))
-        if err == -1: return {}, [], err
+        if err == -1:
+            return {}, [], err
 
         # Downloading playbook and saving to file
         _, err = save_file(case_result['url'], tmp_path + "/playbook.yml")
-        if err == -1: return {}, [], err
+        if err == -1:
+            return {}, [], err
 
         # Linking local yml to master yml
         master_playbook_result.append({'include': str(case['id']) + '/playbook.yml'})
@@ -141,7 +143,8 @@ def create_suite_resources(args, create_suite_resources_args):
 
             # Creating case resources
             cases_result, master_playbook_map, err = create_case_resources(cases, path)
-            if err == -1: return {}, [], err
+            if err == -1:
+                return {}, [], err
 
             # Adding information to maps
             map_src_id[tmp_suite['suite_id']]['cases'].append(
