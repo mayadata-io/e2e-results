@@ -1,1 +1,1 @@
-Azure platform specific code and scripts
+Azure platform-specific code and scripts

@@ -1,6 +1,6 @@
-# GCP platform specific code and scripts
+# GCP platform-specific code and scripts
 ## Google Cloud provisioning and setting up Kubernetes cluster using KOPS
-These playbook act as a wrapper class for all the `kops`, `gsutil` & `gcloud` command. 
+This playbook acts as a wrapper class for all the `kops`, `gsutil` & `gcloud` command. 
 
 ### Prerequisites
 - kubectl
