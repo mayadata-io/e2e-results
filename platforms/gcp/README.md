@@ -9,7 +9,7 @@ This playbook acts as a wrapper class for all the `kops`, `gsutil` & `gcloud` co
 
 ### Setting up
 
-- Run `glcloud init`, and authenticate into your google account linked with the Google Cloud
+- Run `gcloud init`, and authenticate into your google account linked with the Google Cloud
 
 ### Running
 
@@ -20,9 +20,9 @@ ansible-playbook create-vpc.yml -vv
 - Run `create-k8s-cluster`, this will create a Bucket with Random name and the cluster with same name with `.k8s.local` added.
 Pass the Project name and Node count
 ```bash
-ansible-playbook create-k8s-cluster.yml -vv --extra-vars "PROJECT=openebs-ci NODES=1"
+ansible-playbook create-k8s-cluster.yml -vv --extra-vars "PROJECT=<project-name> NODES=1"
 ```
-alas! Cluster is Created!
+Cluster is Created!
 
 ### Deleting the cluster
 

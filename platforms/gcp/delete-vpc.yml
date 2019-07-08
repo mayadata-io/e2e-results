@@ -8,6 +8,27 @@
 
 ---
 - hosts: localhost
+  vars_files:
+    - gcp-vars.yml
   tasks:
-       - name: Deleting VPC `openebs-e2e`
-         shell: gcloud compute --project=openebs-ci networks delete openebs-e2e -q
+       - block:
+             - block:
+                 - name: Deleting VPC `openebs-e2e`
+                   shell: gcloud compute routes delete $(gcloud compute routes list --filter="name:openebs AND network:openebs-e2e"  --format="get(name)") -q || gcloud compute --project=openebs-ci networks delete openebs-e2e -q >> ~/e2e/GCP/cases/{{ delete_vpc_case_id }}/logs
+               rescue:
+                 - name: Only VPC
+                   shell: gcloud compute --project=openebs-ci networks delete openebs-e2e -q >> ~/e2e/GCP/cases/{{ delete_vpc_case_id }}/>> ~/e2e/GCP/cases/{{ delete_vpc_case_id }}/logs
+             - name: Test Passed
+               set_fact:
+                 flag: "Test Passed"
+                 status_id: 1
+         rescue:
+             - name: Test Failed
+               set_fact:
+                 flag: "Test Failed"
+                 status_id: 5
+       - lineinfile:
+           create: yes
+           state: present
+           path: '~/e2e/GCP/cases/{{ delete_vpc_case_id }}/result.json'
+           line: '{ "name" : "delete-vpc", "case_id" : {{ delete_vpc_case_id | to_json }}, "suite_id" : {{ gcp_test_suite_id | to_json }}, "status" : {{ flag | to_json }}, "status_id" : {{ status_id | to_json }} }'
