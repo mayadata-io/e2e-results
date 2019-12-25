@@ -2,9 +2,11 @@
 ########################################################################################################################################################################
 #Steps:
 
-#1.Creating aws bucket for store cluster information
-#2.Creating cluster in aws using the exixting VPC and subnet
-#3.Creating a file which store the cluster information
+#1. Creating ssh public key
+#2. Creating aws bucket for store cluster information
+#3. Creating cluster in aws using the exixting VPC and subnet
+#4. Creating a file which store the cluster information
+#5. Creating a json file for store test-case status
 ########################################################################################################################################################################
 
 ---
@@ -19,12 +21,15 @@
     suite_id: 21
 
   tasks:
+    - name: Create ssh public key
+      shell: mkdir -p ~/.ssh && ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa 
+
     - name: Creting aws bucket
-      shell: aws s3api create-bucket --bucket {{ build_number }}-openebs-e2e --region {{ region }} --create-bucket-configuration LocationConstraint={{ region }}
+      shell: aws s3api create-bucket --bucket {{ build_number }}-openebs-e2e --region {{ region }} --create-bucket-configuration LocationConstraint={{ region }} > ~/e2e/AWS/cases/{{ case_id }}/logs
        
     - name: Cluster creating started
-      shell: kops create cluster --name {{ build_number }}-openebs-e2e.k8s.local --zones {{ region }}a --node-count 3 --state s3://{{ build_number }}-openebs-e2e --vpc {{ vpc_id }} --subnets {{ subnet_id }}  --yes
-
+      shell: kops create cluster --name {{ build_number }}-openebs-e2e.k8s.local --zones {{ region }}a --node-count 3 --state s3://{{ build_number }}-openebs-e2e --vpc {{ vpc_id }} --image "ami-6b3fd60c" --subnets {{ subnet_id }} --networking kube-router --yes >> ~/e2e/AWS/cases/{{ case_id }}/logs
+   
     - name: Store cluster name in a file
       shell: mkdir -p /tmp/aws_cluster && touch /tmp/aws_cluster/{{ build_number }}-openebs-e2e.k8s.local
 
@@ -44,5 +49,5 @@
       lineinfile:
         create: yes
         state: present
-        path: "/tmp/{{ ansible_date_time.date }}/{{ build_number }}/testrail/cases/{{ case_id }}/result.json"
+        path: "~/e2e/AWS/cases/{{ case_id }}/result.json"
         line: '{ "case_id" : {{ case_id | to_json }}, "suite_id" : {{ suite_id | to_json }}, "result" : {{ status | to_json }}, "status_id" : {{ flag | to_json }} }'
